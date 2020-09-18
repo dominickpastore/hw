@@ -1,0 +1,8 @@
+# Ignore all
+*
+# Except hw.sty and .gitignore
+!hw.sty
+!.gitignore
+# This way, this can be cloned into a directory containing a homework
+# assignment, and if modified, it can be easily committed to without
+# accidentally adding files from the assignment to the repository.
