@@ -1,2 +1,279 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Homework Package for Math and Computer Science
+% ==============================================
+% Dominick C. Pastore
+%
+% Can fully format an article-class document or can be applied to an existing
+% document (e.g. a problem set supplied by the professor) to add some
+% convenience features.
+%
+% Package options (e.g. "\usepackage[bare,nocs]{hw}"):
+% ----------------------------------------------------
+%
+% bare - Don't fully-format the page with margins, fancyhdr, and custom
+%   \maketitle. Just provide convenience features like \comma, \R, the problems
+%   environment, nicely configured listings.
+% nocs - Don't provide computer science features (listings package with
+%   preconfigured format settings)
+% nomath - Don't provide math features (convenience commands for use in math
+%   mode or classes of numbers like \mathbb{R} for reals)
+%
+% Basic Features
+% --------------
+%
+% A great majority of homework assignments in math and computer science are a
+% list of problems. A well-written assignment includes the question before the
+% answer, but if they are just typed one after the other, they will blend
+% together. Solving this is perhaps the main purpose of this package. The
+% following environments and commands provide ways to nicely typeset a list of
+% questions and answers with the questions in boldface to set them off from the
+% answers (and it adds a little bit of spacing too).
+%
+% \begin{problems}...\end{problems}
+% \begin{problems}[<label-text>]..\end{problems}
+%   Creates a new enumerated problems list. Create new questions with the
+%   \question{} command below. If the optional arument is provided, it is used
+%   to determine the label for questions (see the "label" key in the enumitem
+%   package, which the argument is fed to). Answers go unenclosed after the
+%   question. Just like regular enumerate, this can be nested for
+%   sub-questions.
+%
+% \begin{problems*}...\end{problems*}
+%   Creates a new unenumerated problems list. Just like the unstarred version,
+%   but questions do not have numbers before them.
+%
+% \question{...}
+%   Creates a new question. Can be used in one of the environments above or on
+%   its own. Question will be in bold with some spacing around it to set it off
+%   from the answer that follows.
+%
+% Page Formatting
+% ---------------
+%
+% If starting a homework assignment from scratch, this package can format the
+% page nicely for you. It will set up margins, headers and footers, and
+% customize the \maketitle command for a basic homework assignment.
+%
+% Sometimes, you are starting from a template provided by the professor. In
+% that case, you probably don't want all the extra page formatting, just the
+% convenience commands and environments. In that case, use the "bare" option to
+% skip all this.
+%
+% Without the bare option, the following always happens:
+% - Letter paper size
+% - Margins set to 1.25in (with headers and footers using some of the top and
+%   bottom margin space)
+% - Page number in the footer
+% - Pages without the title get a header with the class, assignment, and author
+%
+% What happens on the first page depends on if there is a title set or not.
+% Note that the title is separate from the assignment name.
+%
+% Many homework assignments will be untitled, such as run-of-the-mill problem
+% sets. These still have an assignment name (e.g. "Homework 1"). For these, the
+% \maketitle command is customized to print the assignment name in centered,
+% bold, sans-serif text, and the header on that page contains the date in place
+% of the assignment.
+%
+% Titled assignments, such as perhaps papers, do not have a header at all on
+% the page with the title. Instead, below the title, the class, date, and
+% author appear. TODO implement this!
+%
+% The title (for titled assignments), author, and date are all set using the
+% usual commands. The class name and assignment name are set using the
+% following commands:
+%
+% \class{...}
+%   Set the name of the class for this assignment, e.g. \class{CIS 500}
+%
+% \assignment{...}
+%   Set the name of the assignment, e.g. \assignment{Homework 1}
+%
+% Math Conveniences
+% -----------------
+%
+% If the "nomath" option is not provided, the following commands are provided
+% for use in math mode:
+%
+% \N
+% \Z
+% \Q
+% \R
+% \C
+%   Insert the blackboard-bold version of that letter in math mode,
+%   representing the common classes of numbers (naturals, integers, rationals,
+%   reals, complex numbers)
+%
+% \andop
+% \orop
+%   Insert the word "and" or "or" in math mode in upright style, for situations
+%   where you would rather write out the word instead of using \vee or \wedge
+%
+% \period
+% \comma
+%   Insert a period or comma in math mode. Meant to be used at the end of
+%   display math when the display math ends a phrase or sentence.
+%
+% Computer Science Conveniences
+% -----------------------------
+%
+% If the "nocs" option is not provided, the "listings" package is loaded and
+% preconfigured for nice-looking code listings. The default format is meant to
+% be used in floats. If not using a float, add "style=fixed" to the listing to
+% ensure it gets a little space on either side of it.
+%
+% TODO Make this documentation the proper LaTeX way
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{hw}[2020/09/18 LaTeX package for homework assignments]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage{amsmath,amsthm,amssymb}
+\RequirePackage{enumitem}
+\RequirePackage{xifthen}
+
+% Package options
+\newif\if@fancyhw\@fancyhwtrue
+\DeclareOption{bare}{
+  \@fancyhwfalse
+}
+\newif\if@cshw\@cshwtrue
+\DeclareOption{nocs}{
+  \@cshwfalse
+}
+\newif\if@mathhw\@mathhwtrue
+\DeclareOption{nomath}{
+  \@mathhwfalse
+}
+\DeclareOption*{\PackageWarning{examplepackage}{Unknown `\CurrentOption'}}
+\ProcessOptions\relax
+
+% Page formatting (skipped with "bare" option)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\if@fancyhw
+\RequirePackage[margin=1.25in,headheight=1.25em,headsep=1em]{geometry}
+\RequirePackage{fancyhdr}
+
+% Assignment info commands
+\newcommand{\hw@class}{\@empty}
+\newcommand{\class}[1]{\renewcommand{\hw@class}{#1}}
+\newcommand{\hw@assignment}{\@empty}
+\newcommand{\assignment}[1]{\renewcommand{\hw@assignment}{#1}}
+
+% Headers and footers
+\pagestyle{fancy}
+\lhead{\hw@class}
+\chead{\hw@assignment}
+\rhead{\@author}
+\fancypagestyle{firstpage}{%
+  \lhead{\hw@class}
+  \chead{\@date}
+  \rhead{\@author}
+}
+
+% Custom title format
+\title{}
+\renewcommand{\maketitle}{%
+  \ifthenelse{\equal{\@title}{}}{%
+    \thispagestyle{firstpage}
+    {\centering\bfseries\sffamily\LARGE\hw@assignment\par}
+  }{%
+    %TODO Do something better when there is an actual title
+  }
+}
+
+\endif
+
+% Question/answer formatting
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Question/answer environment
+% Optional argument is for label text, using \arabic*, \alph*, \Alph*, \roman*,
+%   and \Roman*, e.g. \Alph*) for A)
+% Inside, use \question{Question text?} to start each question or problem.
+%TODO Argument is broken (I think this was fixed by changing {} to [] around
+%  label=\textbf{#1}...was it?)
+\newenvironment{problems}[1][]{%
+  \ifthenelse{\isempty{#1}}{%
+    \begin{enumerate}[font=\bfseries]
+  }{%
+    \begin{enumerate}[label=\textbf{#1}]
+  }
+}{%
+  \end{enumerate}
+}
+
+% Unnumbered question/answer environment. Still use \question{Question text?}.
+\newenvironment{problems*}{%
+  \begin{itemize}{label={}}
+}{%
+  \end{itemize}
+}
+
+% Start a new question or problem. Question/problem is bolded.
+% Argument is the question or problem text. It's printed in bold.
+\newcommand{\question}[1]{\item {\bfseries\boldmath #1}}
+
+% Nice code listings (skipped with "nocs" option)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\if@cshw
+\RequiresPackage[lighttt]{lmodern}
+\RequiresPackage{listings}
+\RequiresPackage{graphicx}
+%\RequiresPackage{algorithmicx}
+%\RequiresPackage{algorithm}
+%\RequiresPackage{algpseudocode}
+
+% Workaround for bug with light italic tt
+% See https://tex.stackexchange.com/a/234020
+\ttfamily
+\DeclareFontShape{T1}{lmtt}{m}{it}
+     {<->sub*lmtt/m/sl}{}
+
+% Listing configuration
+\lstset{
+  numbers=left,
+  xleftmargin=1em,
+  frame=single,
+  frameround=tttt,
+  belowcaptionskip=3ex,
+  basicstyle=\ttfamily,
+  basewidth={0.5em,0.5em},
+  stepnumber=5,
+  numberstyle=\tiny, %line numbers
+  breaklines=true
+}
+\lstdefinestyle{fixed}{
+  aboveskip=1em,
+  belowskip=1em
+}
+
+\endif
+
+% Math convenience commands (skipped with "nomath" option)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\if@mathhw
+\RequiresPackage{mleftright}
+
+% Sets of numbers
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+
+% Written out logical connectives for use in mathematical formulae
+% (\andop, \orop)
+\DeclareMathOperator\andoper{and}
+\DeclareMathOperator\oroper{or}
+\newcommand{\andop}{\mathbin{\andoper}}
+\newcommand{\orop}{\mathbin{\oroper}}
+
+% Comma and period for use with display math (if the math is the end of a
+% phrase or sentence)
+\newcommand{\period}{\,\text{.}}
+\newcommand{\comma}{\,\text{,}}
+
+\endif
+
+\endinput
