@@ -27,7 +27,7 @@
 % together. Solving this is perhaps the main purpose of this package. The
 % following environments and commands provide ways to nicely typeset a list of
 % questions and answers with the questions in boldface to set them off from the
-% answers (and it adds a little bit of spacing too).
+% answers.
 %
 % \begin{problems}...\end{problems}
 % \begin{problems}[<label-text>]..\end{problems}
@@ -39,13 +39,17 @@
 %   sub-questions.
 %
 % \begin{problems*}...\end{problems*}
-%   Creates a new unenumerated problems list. Just like the unstarred version,
-%   but questions do not have numbers before them.
+%   Creates a new unenumerated problems list. Questions do not have numbers
+%   before them and paragraphs are indented rather than separated by a little
+%   space. But, still a list, thus can be nested.
 %
 % \question{...}
 %   Creates a new question. Can be used in one of the environments above or on
-%   its own. Question will be in bold with some spacing around it to set it off
-%   from the answer that follows.
+%   its own. Question will be in bold. If used outside the environments above,
+%   note that no spacing will be added, which might look funny. This is to
+%   avoid interfering with any spacing a .tex file provided by a professor
+%   might already have. If you do want the spacing, consider the problems*
+%   environment.
 %
 % Page Formatting
 % ---------------
@@ -113,6 +117,9 @@
 % \comma
 %   Insert a period or comma in math mode. Meant to be used at the end of
 %   display math when the display math ends a phrase or sentence.
+%
+% Finally, the "mleftright" package is loaded for access to the \mleft and
+% \mright commands.
 %
 % Computer Science Conveniences
 % -----------------------------
@@ -182,44 +189,59 @@
   }
 }
 
-\endif
+\fi
 
 % Question/answer formatting
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newif\if@hwproblems\@hwproblemsfalse
+\newif\if@hwproblemsstar\@hwproblemsstarfalse
 
 % Question/answer environment
 % Optional argument is for label text, using \arabic*, \alph*, \Alph*, \roman*,
 %   and \Roman*, e.g. \Alph*) for A)
 % Inside, use \question{Question text?} to start each question or problem.
-%TODO Argument is broken (I think this was fixed by changing {} to [] around
-%  label=\textbf{#1}...was it?)
 \newenvironment{problems}[1][]{%
+  \@hwproblemstrue
   \ifthenelse{\isempty{#1}}{%
-    \begin{enumerate}[font=\bfseries]
+    \begin{enumerate}[parsep=0.5em,font=\bfseries]
   }{%
-    \begin{enumerate}[label=\textbf{#1}]
+    \begin{enumerate}[parsep=0.5em,label=\textbf{#1}]
   }
 }{%
   \end{enumerate}
+  \@hwproblemsfalse
 }
 
 % Unnumbered question/answer environment. Still use \question{Question text?}.
 \newenvironment{problems*}{%
-  \begin{itemize}{label={}}
+  \@hwproblemstrue
+  \@hwproblemsstartrue
+  \begin{itemize}[
+    parsep=\parskip,
+    itemindent=\parindent,
+    listparindent=\parindent,
+    label={}]
 }{%
   \end{itemize}
+  \@hwproblemsfalse
+  \@hwproblemsstarfalse
 }
 
 % Start a new question or problem. Question/problem is bolded.
 % Argument is the question or problem text. It's printed in bold.
-\newcommand{\question}[1]{\item {\bfseries\boldmath #1}}
+\newcommand{\question}[1]{%
+  \if@hwproblems\item\fi
+  {\bfseries\boldmath #1}
+  \if@hwproblemsstar\vspace{0.5em}\fi
+}
 
 % Nice code listings (skipped with "nocs" option)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \if@cshw
-\RequiresPackage[lighttt]{lmodern}
-\RequiresPackage{listings}
-\RequiresPackage{graphicx}
+\RequirePackage[lighttt]{lmodern}
+\RequirePackage{listings}
+\RequirePackage{graphicx}
 %\RequiresPackage{algorithmicx}
 %\RequiresPackage{algorithm}
 %\RequiresPackage{algpseudocode}
@@ -248,12 +270,12 @@
   belowskip=1em
 }
 
-\endif
+\fi
 
 % Math convenience commands (skipped with "nomath" option)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \if@mathhw
-\RequiresPackage{mleftright}
+\RequirePackage{mleftright}
 
 % Sets of numbers
 \newcommand{\N}{\mathbb{N}}
@@ -274,6 +296,6 @@
 \newcommand{\period}{\,\text{.}}
 \newcommand{\comma}{\,\text{,}}
 
-\endif
+\fi
 
 \endinput
