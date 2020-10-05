@@ -18,8 +18,8 @@
 % nomath - Don't provide math features (convenience commands for use in math
 %   mode or classes of numbers like \mathbb{R} for reals)
 %
-% Basic Features
-% --------------
+% Problem sets
+% ------------
 %
 % A great majority of homework assignments in math and computer science are a
 % list of problems. A well-written assignment includes the question before the
@@ -31,17 +31,47 @@
 %
 % \begin{problems}...\end{problems}
 % \begin{problems}[<label-text>]..\end{problems}
+% \begin{subproblems}...\end{subproblems}
+% \begin{subproblems}[<label-text>]..\end{subproblems}
 %   Creates a new enumerated problems list. Create new questions with the
 %   \question{} command below. If the optional arument is provided, it is used
 %   to determine the label for questions (see the "label" key in the enumitem
 %   package, which the argument is fed to). Answers go unenclosed after the
-%   question. Just like regular enumerate, this can be nested for
-%   sub-questions.
+%   question.
+%
+%   The difference between problems and subproblems is that the latter has some
+%   hanging indentation and the former does not. While either can be nested
+%   without error (just like regular enumerate), the intention is that the top
+%   level of problems should not have a hanging indent since there likely is
+%   not other text in the document for the list to be set off from. Meanwhile,
+%   subproblems should be set off from their parent problem, so they do need
+%   indentation.
 %
 % \begin{problems*}...\end{problems*}
+% \begin{subproblems*}...\end{subproblems*}
 %   Creates a new unenumerated problems list. Questions do not have numbers
-%   before them and paragraphs are indented rather than separated by a little
-%   space. But, still a list, thus can be nested.
+%   before them and paragraphs are separated using the normal methods for body
+%   text (i.e a first line indent rather than being separated by a little
+%   space, unless that's been changed for the rest of the document).
+%   Essentially, get a problems list without it looking like a list.
+%   However, it still technically is a list, and thus other problems lists can
+%   be nested inside.
+%
+%   Note that if you *want* list-like formatting similar to the unstarred
+%   problems environment, just without numbers, you might consider using the
+%   parskip package, or else simply modifying \parskip and \parindent:
+%
+%     \usepackage{parskip}
+%     % -or-
+%     \setlength{\parindent}{0pt}
+%     \setlength{\parskip}{0.5em}
+%
+%   Like regular problems vs. subproblems, subproblems* has a hanging indent
+%   while problems* does not. However, nested lists of unnumbered problems are
+%   fairly uncommon. Even if you do have them, you may not want the extra
+%   indentation from subproblems*. But, it's there if you need it. (If you have
+%   a numbered problem with multiple unnumbered parts to it, consider using
+%   \followup.)
 %
 % \question{...}
 %   Creates a new question. Can be used in one of the environments above or on
@@ -50,6 +80,25 @@
 %   avoid interfering with any spacing a .tex file provided by a professor
 %   might already have. If you do want the spacing, consider the problems*
 %   environment.
+%
+% \followup{...}
+%   Adds an additional unnumbered part to a numbered question. (This is not
+%   meant to be used inside the unnumbered problems* and subproblems*
+%   environments.) This is useful if you have a problem with follow-up
+%   questions after the main question, for example:
+%
+%     1. The UPS driver wasn't paying attention and accidentally tossed your
+%        package on the roof. If the angle of the roof is 30 degrees and the
+%        box weighs 2kg, calculate the component of gravitational force that's
+%        perpendicular to the roof and the component that's parallel.
+%
+%        If the coefficient of static friction is 0.8, will the box start
+%        sliding down the roof?
+%
+%   The difference between this and using a nested problems* environment is
+%   that problems* uses regular body-paragraph-style indentation and spacing,
+%   while this uses the same paragraph formatting as the rest of the list it's
+%   in.
 %
 % Page Formatting
 % ---------------
@@ -200,8 +249,23 @@
 % Question/answer environment
 % Optional argument is for label text, using \arabic*, \alph*, \Alph*, \roman*,
 %   and \Roman*, e.g. \Alph*) for A)
-% Inside, use \question{Question text?} to start each question or problem.
+% Inside, use \question{Question text} to start each question or problem.
 \newenvironment{problems}[1][]{%
+  \@hwproblemstrue
+  \ifthenelse{\isempty{#1}}{%
+    \begin{enumerate}[parsep=0.5em,font=\bfseries,
+        align=left,leftmargin=0pt,labelindent=0pt,itemindent=!]
+  }{%
+    \begin{enumerate}[parsep=0.5em,label=\textbf{#1},
+        align=left,leftmargin=0pt,labelindent=0pt,itemindent=!]
+  }
+}{%
+  \end{enumerate}
+  \@hwproblemsfalse
+}
+
+% Subquestion/answer environment. Like above, but with a hanging indent.
+\newenvironment{subproblems}[1][]{%
   \@hwproblemstrue
   \ifthenelse{\isempty{#1}}{%
     \begin{enumerate}[parsep=0.5em,font=\bfseries]
@@ -213,8 +277,43 @@
   \@hwproblemsfalse
 }
 
-% Unnumbered question/answer environment. Still use \question{Question text?}.
+% Left-aligned-label subquestion/answer environment. If the question labels are
+% too long, they stick out past the left margin on a regular subproblems
+% environment (e.g. if the label is "Problem \arabic*."). This environment
+% accounts for that by using a left-aligned label, which extends into the
+% question body rather than the margin. This isn't the default, though, because
+% the spacing looks bad for regular-size (i.e. short) labels.
+\newenvironment{lsubproblems}[1][]{%
+  \@hwproblemstrue
+  \ifthenelse{\isempty{#1}}{%
+    \begin{enumerate}[parsep=0.5em,font=\bfseries,align=left]
+  }{%
+    \begin{enumerate}[parsep=0.5em,label=\textbf{#1},align=left]
+  }
+}{%
+  \end{enumerate}
+  \@hwproblemsfalse
+}
+
+% Unnumbered question/answer environment. Still use \question{Question text}.
 \newenvironment{problems*}{%
+  \@hwproblemstrue
+  \@hwproblemsstartrue
+  \begin{itemize}[
+    parsep=\parskip,
+    itemindent=\parindent,
+    listparindent=\parindent,
+    leftmargin=0pt,
+    label={}]
+}{%
+  \end{itemize}
+  \@hwproblemsfalse
+  \@hwproblemsstarfalse
+}
+
+% Unnumbered subquestion/answer environment. Like problems* but with a hanging
+% indent.
+\newenvironment{subproblems*}{%
   \@hwproblemstrue
   \@hwproblemsstartrue
   \begin{itemize}[
@@ -232,7 +331,16 @@
 % Argument is the question or problem text. It's printed in bold.
 \newcommand{\question}[1]{%
   \if@hwproblems\item\fi
-  {\bfseries\boldmath #1}
+  {\bfseries\boldmath #1}%
+  \if@hwproblemsstar\vspace{0.5em}\fi
+}
+
+% Add an additional unnumbered part to a numbered question. Useful when you
+% have a question where there are follow ups after the main question. Not
+% meant to be used for problems* or subproblems*, where questions are
+% unnumbered to begin with.
+\newcommand{\followup}[1]{%
+  {\bfseries\boldmath #1}%
   \if@hwproblemsstar\vspace{0.5em}\fi
 }
 
